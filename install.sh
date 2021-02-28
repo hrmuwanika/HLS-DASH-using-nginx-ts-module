@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ################################################################################
-# Script for installing Nginx RTMP module
+# Script for installing Nginx TS module
 # Author: Henry Robert Muwanika
 #-------------------------------------------------------------------------------
 #
@@ -36,8 +36,8 @@ sudo apt install -y build-essential libpcre3 libpcre3-dev libssl-dev zlib1g-dev 
 
 sudo mkdir ~/build && cd ~/build
 
-# Clone nginx-rtmp-module
-git clone https://github.com/sergey-dryabzhinsky/nginx-rtmp-module.git
+# Clone nginx-ts-module
+git clone https://github.com/arut/nginx-ts-module.git
 
 # Download nginx
 sudo wget http://nginx.org/download/nginx-1.19.6.tar.gz
@@ -45,7 +45,7 @@ sudo tar xzf nginx-1.19.6.tar.gz
 cd nginx-1.19.6
 
 # Build nginx with nginx-rtmp
-sudo ./configure --with-http_ssl_module --with-http_stub_status_module --with-file-aio --add-module=../nginx-rtmp-module
+sudo ./configure --with-http_ssl_module --add-module=../nginx-ts-module
 sudo make 
 sudo make install
 
@@ -61,109 +61,46 @@ sudo cat <<EOF > /usr/local/nginx/conf/nginx.conf
 #user  nobody;
 worker_processes  1;
 
-#error_log  logs/error.log;
-#error_log  logs/error.log  notice;
-#error_log  logs/error.log  info;
-
 pid   /var/run/nginx.pid;
 
 events {
     worker_connections  1024;
 }
 
-# RTMP configuration
-rtmp {
+http {
     server {
-        listen 1935;         # Listen on standard RTMP port
-        chunk_size 4000;
+        listen 8080;
 
-        application stream {
-            live on;
-            # pull rtmp://origin-rtmp-server:1935/live name=m3tv static; 
-            
-            # Turn on HLS
-            hls on;
-            hls_path /usr/local/nginx/html/stream/hls;
-            hls_fragment 3;
-            hls_playlist_length 20;
-	    hls_fragment_naming system;
-            
-            # MPEG-DASH is similar to HLS
-            dash on;
-            dash_path /usr/local/nginx/html/stream/dash;
-            dash_fragment 5s;
-            dash_playlist_length 30s;
-                
-            # disable consuming the stream from nginx as rtmp
-            deny play all;
+        location / {
+            root html;
+        }
+
+        location /publish/ {
+            ts;
+            ts_hls path=/var/media/hls segment=10s;
+            ts_dash path=/var/media/dash segment=10s;
+
+            client_max_body_size 0;
+        }
+
+        location /play/ {
+            types {
+                application/x-mpegURL m3u8;
+                application/dash+xml mpd;
+                video/MP2T ts;
+                video/mp4 mp4;
+            }
+            alias /var/media/;
         }
     }
 }
-            
-http  {
-                sendfile on;
-                tcp_nopush on;
-                aio on;
-                directio 512;
-    
-                keepalive_timeout  65;
-    
-                include mime.types;
-                default_type application/octet-stream;
-
-    server {
-                listen 443;
-                server_name example.com;
-		       
-		# Serve HLS fragments
-		location /hls {
-			types {
-				application/vnd.apple.mpegurl m3u8;
-				video/mp2t ts;
-			}
-			
-			root /usr/local/nginx/html/stream;
-            
-                        # Disable cache
-                        add_header Cache-Control no-cache; 
-			add_header Access-Control-Allow-Origin *;       
-		      }
-		
-                 # Serve DASH fragments
-                 location /dash {
-                          types {
-                                  application/dash+xml mpd;
-                                  video/mp4 mp4;
-                       }
-
-		        root /usr/local/nginx/html/stream;
-            
-		        # Disable cache
-		        add_header Cache-Control no-cache; 
-		        add_header Access-Control-Allow-Origin *;
-                        }		
-		
-		        # This URL provides RTMP statistics in XML
-		        location /stat {
-			                rtmp_stat all;
-			                rtmp_stat_stylesheet stat.xsl; 
-		        }
-
-		        location /stat.xsl {
-			               # XML stylesheet to view RTMP stats.
-                                       # Copy stat.xsl wherever you want
-                                       # and put the full directory path here
-			               root /usr/local/nginx/html;
-		        } 
-	          }
-           }
 
 ################################################################################################################
 EOF
 
-mkdir /usr/local/nginx/html/stream
-mkdir /usr/local/nginx/html/stream/hls
-mkdir /usr/local/nginx/html/stream/dash
+mkdir /var/media
+mkdir /var/media/hls
+mkdir /var/media/dash
 
 # Create Nginx systemd daemon
 sudo cat <<EOF > /lib/systemd/system/nginx.service
