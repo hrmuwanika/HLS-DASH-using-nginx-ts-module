@@ -68,11 +68,23 @@ events {
 }
 
 http {
+        include  mime.types;
+         default_type  application/octet-stream;
+
+         sendfile    on;
+         tcp_nopush  on;
+         tcp_nodelay on;
+
+         keepalive_timeout  65;
+         
     server {
         listen 8080;
+        server_name  vps.rw;
 
         location / {
-            root html;
+            # Here we can put our website
+            root   /var/www/html;
+            index  index.html index.htm;
         }
 
         location /publish/ {
@@ -91,6 +103,8 @@ http {
                 video/MP2T ts;
                 video/mp4 mp4;
             }
+            
+            # Where the media(hls or dash) files are located
             alias /var/media/;
         }
     }
