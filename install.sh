@@ -89,8 +89,8 @@ http {
 
         location /publish/ {
             ts;
-            ts_hls path=/var/media/hls segment=10s;
-            ts_dash path=/var/media/dash segment=10s;
+            ts_hls path=/var/media/hls segment=4s;
+            ts_dash path=/var/media/dash segment=4s;
             
             # This directive sets unlimited request body size
             client_max_body_size 0;
