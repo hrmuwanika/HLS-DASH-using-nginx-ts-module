@@ -59,7 +59,7 @@ sudo cat <<EOF > /usr/local/nginx/conf/nginx.conf
 #############################################################################
 
 #user  nobody;
-worker_processes  1;
+worker_processes auto;
 
 pid   /var/run/nginx.pid;
 
@@ -68,7 +68,7 @@ events {
 }
 
 http {
-        include  mime.types;
+         include  mime.types;
          default_type  application/octet-stream;
 
          sendfile    on;
@@ -79,7 +79,7 @@ http {
          
     server {
         listen 8080;
-        server_name  vps.rw;
+        server_name  vps.rw www.vps.rw;
 
         location / {
             # Here we can put our website
