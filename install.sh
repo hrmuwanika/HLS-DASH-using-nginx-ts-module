@@ -79,7 +79,7 @@ http {
          
     server {
         listen 8080;
-        server_name  vps.rw www.vps.rw;
+        server_name  example.com;
 
         location / {
             # Here we can put our website
@@ -89,8 +89,8 @@ http {
 
         location /publish/ {
             ts;
-            ts_hls path=/var/media/hls segment=4s;
-            ts_dash path=/var/media/dash segment=4s;
+            ts_hls path=/var/media/hls segment=2s;
+            ts_dash path=/var/media/dash segment=2s;
             
             # This directive sets unlimited request body size
             client_max_body_size 0;
