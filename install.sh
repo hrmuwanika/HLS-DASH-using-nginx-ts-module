@@ -28,16 +28,18 @@ sudo apt autoremove -y
 # Install FFMPEG
 sudo add-apt-repository ppa:jonathonf/ffmpeg-4
 sudo apt update
-sudo apt install -y ffmpeg libav-tools x264 x265
-ffmpeg -version
+sudo apt install -y ffmpeg x264 x265
 
 # Install nginx dependencies
-sudo apt install -y build-essential libpcre3 libpcre3-dev libssl-dev zlib1g-dev unzip git
+sudo apt install -y autoconf automake build-essential libpcre3 libpcre3-dev libssl-dev zlib1g-dev unzip git
 
 sudo mkdir ~/build && cd ~/build
 
 # Clone nginx-ts-module
 git clone https://github.com/arut/nginx-ts-module.git
+
+# Clone nginx-rtmp-module
+git clone https://github.com/sergey-dryabzhinsky/nginx-rtmp-module.git
 
 # Download nginx
 sudo wget http://nginx.org/download/nginx-1.19.6.tar.gz
@@ -45,7 +47,7 @@ sudo tar xzf nginx-1.19.6.tar.gz
 cd nginx-1.19.6
 
 # Build nginx with nginx-rtmp
-sudo ./configure --with-http_ssl_module --add-module=../nginx-ts-module
+sudo ./configure --with-http_ssl_module --with-http_stub_status_module --add-module=../nginx-ts-module --add-module=../nginx-rtmp-module
 sudo make 
 sudo make install
 
